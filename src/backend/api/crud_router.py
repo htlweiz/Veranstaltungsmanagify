@@ -1,11 +1,25 @@
 from typing import TypeVar, Generic, Type, Annotated
 from crud import CRUD
-from fastapi import APIRouter, Header, HTTPException, status, Depends
+from fastapi import APIRouter, Header, HTTPException, Request, status, Depends
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 from sqlalchemy import select
 from pydantic import BaseModel
 from api.helpers import requires_user
+
+
+async def get_access_token(request: Request) -> str:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Unauthorized",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    token = request.cookies.get("access_token")
+    if token == None:
+        raise credentials_exception
+
+    return token
 
 
 V = TypeVar("V")  # Response-body type
@@ -32,26 +46,31 @@ class CRUDRouter(APIRouter, Generic[V]):
             return await self.read(filter)
 
         async def create(
-            instance: request_model, AccessToken: Annotated[str | None, Header()] = None
+            instance: request_model,
+            AccessToken: Annotated[str | None, Depends(get_access_token)] = None,
         ):
             return await self.create(instance, AccessToken)
 
         async def put(
             id: int,
             instance: put_model,
-            AccessToken: Annotated[str | None, Header()] = None,
+            AccessToken: Annotated[str | None, Depends(get_access_token)] = None,
         ):
             return await self.put(id, instance, AccessToken)
 
         async def patch(
             id: int,
             instance: patch_model,
-            cookie: Annotated[str | None, Header()] = None,
+            cookie: Annotated[str | None, Depends(get_access_token)] = None,
         ):
             return await self.patch(id, instance, cookie)
 
         self.add_api_route(
-            "/" + db_model_name, create, methods=["POST"], status_code=201, response_model=response_model,
+            "/" + db_model_name,
+            create,
+            methods=["POST"],
+            status_code=201,
+            response_model=response_model,
             tags=[db_model_name],
         )
         self.add_api_route(
@@ -78,11 +97,19 @@ class CRUDRouter(APIRouter, Generic[V]):
             tags=[db_model_name],
         )
         self.add_api_route(
-            "/" + db_model_name + "/{id}", put, methods=["PUT"], status_code=200, response_model=response_model,
+            "/" + db_model_name + "/{id}",
+            put,
+            methods=["PUT"],
+            status_code=200,
+            response_model=response_model,
             tags=[db_model_name],
         )
         self.add_api_route(
-            "/" + db_model_name + "/{id}", patch, methods=["PATCH"], status_code=200, response_model=response_model,
+            "/" + db_model_name + "/{id}",
+            patch,
+            methods=["PATCH"],
+            status_code=200,
+            response_model=response_model,
             tags=[db_model_name],
         )
 
@@ -111,9 +138,7 @@ class CRUDRouter(APIRouter, Generic[V]):
             )
         self.crud_model.delete_by_id(id)
 
-    async def get_by_id(
-        self, id: int
-    ):
+    async def get_by_id(self, id: int):
         return self.crud_model.get_by_id(id)
 
     async def put(

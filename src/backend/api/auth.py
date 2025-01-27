@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Response, Request
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi import Depends, HTTPException, Response, status, APIRouter
 from db.model import User
 from api.model import SignupSchema, LoginSchema, LoginDB, MSALLogin
 from expiringdict import ExpiringDict
@@ -19,7 +20,9 @@ client_id = os.environ.get("MSAL_CLIENT_ID")
 authority = os.environ.get("MSAL_AUTHORITY")
 secret = os.environ.get("MSAL_CLIENT_SECRET")
 
-msal_client = msal.ConfidentialClientApplication(client_id, authority=authority, client_credential=secret)
+msal_client = msal.ConfidentialClientApplication(
+    client_id, authority=authority, client_credential=secret
+)
 
 
 def get_email_from_token(token: str) -> str:
@@ -36,12 +39,16 @@ def get_email_from_token(token: str) -> str:
 def create_user_from_token(access_token: str) -> User:
     user = SignupSchema(email=get_email_from_token(access_token), password="")
     return users.create(user)
-       
+
 
 @router.post("/login/ms", status_code=200, response_model=LoginDB, tags=["auth"])
 async def msal_login(token: str) -> User | None:
-    result = msal_client.acquire_token_by_authorization_code(code=token, scopes=["User.Read"], redirect_uri="https://localhost:8002/oauth2-redirect")
-    
+    result = msal_client.acquire_token_by_authorization_code(
+        code=token,
+        scopes=["User.Read"],
+        redirect_uri="https://localhost:8002/oauth2-redirect",
+    )
+
     if "access_token" in result:
         access_token = result["access_token"]
         email = get_email_from_token(access_token)
@@ -54,12 +61,21 @@ async def msal_login(token: str) -> User | None:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
-@router.post("/signup", status_code=200, response_class=HTMLResponse, tags=["auth"])
+@router.post("/signup", status_code=201, response_class=HTMLResponse, tags=["auth"])
 async def signup(user: SignupSchema):
     created = users.create(user)
-    return Response(created.access_token, status_code=201)
+    response = Response(status_code=status.HTTP_201_CREATED)
+    response.set_cookie(
+        "access_token",
+        value=f"{created.access_token}",
+        httponly=True,
+        secure=True,
+        samesite="none",
+    )
+    return response
 
-@router.post("/login", status_code=200, response_model=LoginDB, tags=["auth"])
+
+@router.post("/login", status_code=200, response_model=None, tags=["auth"])
 async def login(login_user: LoginSchema, response: Response):
     user = users.get_by_email(login_user.email)
     if not user:
@@ -68,10 +84,22 @@ async def login(login_user: LoginSchema, response: Response):
         login_user.password.encode("utf-8"), str(user.password).encode("utf-8")
     ):
         return Response("Invalid Password", status_code=401)
-    acces_tkn = user.access_token
-    return LoginDB(access_token=acces_tkn)
+    access_token = user.access_token
+
+    response = Response(status_code=status.HTTP_200_OK)
+    response.set_cookie(
+        "access_token",
+        value=f"{access_token}",
+        httponly=True,
+        secure=True,
+        samesite="none",
+    )
+    return response
+
 
 @router.get("/oauth2-redirect", status_code=200)
 async def msal_response(request: Request, response: Response):
     access_token = (await msal_login(request.query_params.get("code"))).access_token
-    return RedirectResponse(url="https://localhost:5173/login?access_token=" + access_token)
+    return RedirectResponse(
+        url="https://localhost:5173/login?access_token=" + access_token
+    )
