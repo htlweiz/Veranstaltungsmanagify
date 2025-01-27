@@ -5,6 +5,7 @@ from sqlalchemy import (
     Integer,
     String,
     DateTime,
+    Table,
     UniqueConstraint,
     LargeBinary
 )
@@ -44,9 +45,14 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String)
     username = Column(String, nullable=False, unique=True)
+    role_id = Column(Integer, ForeignKey("roles.role_id", ondelete="CASCADE"), nullable=False, default=2)
 
     approvals = relationship("Event", secondary="user_approve_event", back_populates="approving_users")
     events = relationship("Event", secondary="user_event", back_populates="users")
+
+    role = relationship("Role", back_populates="users")
+
+event_studend_association = Table("event_student", Base.metadata, Column("event_id", Integer, ForeignKey("events.event_id")), Column("student_id", Integer, ForeignKey("students.student_id")))
 
 class MultiDayEvent(Base):
     __tablename__ = "multi_day_events"
@@ -55,7 +61,21 @@ class MultiDayEvent(Base):
     event_id = Column(Integer, ForeignKey("events.event_id", ondelete="CASCADE"), primary_key=True)
     sga_approved = Column(Boolean, nullable=False)
 
-    event = relationship("Event", backref=backref("multi_day_data", cascade="all, delete-orphan"))
+    event = relationship("Event", back_populates="multi_day_data")
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    role_id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False, unique=True)
+    can_approve = Column(Boolean, nullable=False)
+    parent_id = Column(Integer, ForeignKey("roles.role_id", ondelete="CASCADE"))
+
+    parent = relationship("Role", back_populates="children", remote_side=[role_id])
+    children = relationship("Role", back_populates="parent", cascade="all, delete-orphan")
+
+
+    users = relationship("User", back_populates="role")
 
 class Event(Base):
     __tablename__ = "events"
@@ -71,10 +91,10 @@ class Event(Base):
 
     approving_users = relationship("User", secondary="user_approve_event", back_populates="approvals")
     users = relationship("User", secondary="user_event", back_populates="events")
-    students = relationship("Student", secondary="event_student", back_populates="events")
+    students = relationship("Student", secondary=event_studend_association, back_populates="events")
 
     address = relationship("Address")
-    multi_day_data = relationship("MultiDayEvent", backref=backref("event", cascade="all, delete-orphan"))
+    multi_day_data = relationship("MultiDayEvent", back_populates="event")
 
 class Class(Base):
     __tablename__ = "classes"
@@ -82,7 +102,8 @@ class Class(Base):
     class_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False, unique=True)
 
-    students = relationship("Student", backref=backref("my_class", cascade="all, delete-orphan"))
+    students = relationship("Student", back_populates="my_class")
+
 
 class Student(Base):
     __tablename__ = "students"
@@ -94,18 +115,9 @@ class Student(Base):
 
     class_id = Column(Integer, ForeignKey("classes.class_id", ondelete="CASCADE"))
 
-    my_class = relationship("Class", backref=backref("students", cascade="all, delete-orphan"))
-    events = relationship("Event", secondary="event_student", back_populates="students")
+    my_class = relationship("Class", back_populates="students")
+    events = relationship("Event", secondary=event_studend_association, back_populates="students")
 
-
-class EventStudent(Base):
-    __tablename__ = "event_student"
-
-    event_id = Column(Integer, ForeignKey("events.event_id", ondelete="CASCADE"), primary_key=True)
-    student_id = Column(Integer, ForeignKey("students.student_id", ondelete="CASCADE"), primary_key=True)
-
-    event = relationship("Event", backref=backref("students", cascade="all, delete-orphan"))
-    student = relationship("Student", backref=backref("events", cascade="all, delete-orphan"))
 
 
 class Address(Base):

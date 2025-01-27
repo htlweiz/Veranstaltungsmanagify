@@ -24,7 +24,7 @@ class UserCRUD(CRUD[User]):
             email=payload.email,
             password=hsh.decode("utf-8"),
             access_token=access_token,
-            username=payload.username
+            username=payload.username,
         )
         self.session.add(user)
         self.session.commit()
