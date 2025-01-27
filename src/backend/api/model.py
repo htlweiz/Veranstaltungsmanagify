@@ -104,7 +104,7 @@ class EventSchema(BaseModel):
     transportation_costs: int
     parental_info: bytes
     teachers: List[str]
-    students: List[StudentSchema]
+    students: List[int]
     address: Address
 
 class MultiDayDataDB(BaseModel):

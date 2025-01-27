@@ -24,7 +24,7 @@ class EventCRUD(CRUD[Event]):
         event = super().create(payload.model_dump(exclude={"teachers", "students", "address"}), user_creating_id) 
         address = addresses.create(payload.address, user_creating_id)
         teachers = [users.get_by_email(teacher) for teacher in payload.teachers]
-        event_students = [students.create(student, user_creating_id) for student in payload.students]
+        event_students = [students.get_by_id(student_id) for student_id in payload.students]
 
         event.address = address
         event.users = teachers
