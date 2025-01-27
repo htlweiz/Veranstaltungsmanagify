@@ -46,9 +46,9 @@ class CRUDRouter(APIRouter, Generic[V]):
         async def patch(
             id: int,
             instance: patch_model,
-            cookie: Annotated[str | None, Header()] = None,
+            AccessToken: Annotated[str | None, Header()] = None,
         ):
-            return await self.patch(id, instance, cookie)
+            return await self.patch(id, instance, AccessToken)
 
         self.add_api_route(
             "/" + db_model_name, create, methods=["POST"], status_code=201, response_model=response_model,

@@ -56,6 +56,5 @@ class EventCRUD(CRUD[Event]):
         event.pending_approval = pending_approval
 
         return event 
-        
 
 events = EventCRUD(session)

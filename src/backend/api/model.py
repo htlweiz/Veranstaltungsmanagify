@@ -132,3 +132,11 @@ class EventDB(BaseModel):
 @partial_model
 class EventPatch(EventSchema):
     address: AddressPatch
+
+@partial_model
+class UserPatch(UserSchema):
+    pass
+
+@partial_model
+class StudentPatch(StudentSchema):
+    pass
