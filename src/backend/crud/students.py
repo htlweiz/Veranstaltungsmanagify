@@ -17,7 +17,7 @@ class StudentCRUD(CRUD[Student]):
         super().__init__(session, Student)
     
     def create(self, payload: StudentSchema, user_creating_id: int) -> Student:
-        student: Student = super().create(payload, user_creating_id)
+        student: Student = super().create(payload.model_dump(exclude={"class_name"}), user_creating_id)
         student_class = classes.get_or_create_by_class_name(payload.class_name)
 
         student.my_class = student_class

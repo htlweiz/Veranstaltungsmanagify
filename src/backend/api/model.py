@@ -66,9 +66,9 @@ class UserSchema(BaseModel):
 class UserPatch(UserSchema):
     pass
 
-class UserDB(UserSchema):
+class UserDB(BaseModel):
     user_id: int
-    role: int
+    role_id: int
     username: str
     email: str
 
@@ -78,12 +78,12 @@ class StudentSchema(BaseModel):
     is_female: bool
     class_name: str
 
-class StudentDB(StudentSchema):
+class StudentDB(BaseModel):
     student_id: int
     first_name: str
     last_name: str
-    is_female: str
-    class_name: str
+    is_female: bool
+    class_id: int 
 
 class Address(BaseModel):
     street: str
@@ -108,7 +108,13 @@ class EventSchema(BaseModel):
     address: Address
 
 class MultiDayDataDB(BaseModel):
-    sga_approved: Optional[bool]
+    sga_approved: Optional[bool] = None
+
+class PendingApprovalDB(BaseModel):
+    event_id: int
+    user_id: int
+    is_approved: bool
+
 
 class EventDB(BaseModel):
     event_id: int
@@ -117,12 +123,11 @@ class EventDB(BaseModel):
     curriculum_ref: str
     total_costs: int
     transportation_costs: int
-    parental_info: bytes
     users: List[UserDB]
     students: List[StudentDB]
     address: Address
-    multi_day_data: Optional[MultiDayDataDB]
-    pending_approval: List[int]
+    multi_day_data: Optional[MultiDayDataDB] = None
+    pending_approval: List[PendingApprovalDB]
 
 @partial_model
 class EventPatch(EventSchema):
