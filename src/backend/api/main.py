@@ -6,7 +6,7 @@ from db.session import metadata, engine
 from db.model import *
 from fastapi import APIRouter
 import logging
-from api import auth, events
+from api import auth, events, users, students
 from api.settings import ORIGINS
 
 
@@ -31,6 +31,8 @@ metadata.create_all(engine)
 
 app.include_router(auth.router)
 app.include_router(events.router)
+app.include_router(users.router)
+app.include_router(students.router)
 
 
 add_pagination(app)

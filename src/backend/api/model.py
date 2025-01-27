@@ -104,7 +104,7 @@ class EventSchema(BaseModel):
     transportation_costs: int
     parental_info: bytes
     teachers: List[str]
-    students: List[StudentSchema]
+    students: List[int]
     address: Address
 
 class MultiDayDataDB(BaseModel):
@@ -132,3 +132,11 @@ class EventDB(BaseModel):
 @partial_model
 class EventPatch(EventSchema):
     address: AddressPatch
+
+@partial_model
+class UserPatch(UserSchema):
+    pass
+
+@partial_model
+class StudentPatch(StudentSchema):
+    pass
