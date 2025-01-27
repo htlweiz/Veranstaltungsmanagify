@@ -12,10 +12,6 @@
 		{ name: 'Reviewed Submissions', href: '/reviewed-submissions' },
 		{ name: 'Review', href: '/review' }
 	];
-
-	$effect(() => {
-		console.log(page.url.pathname);
-	});
 </script>
 
 <div class="h-full w-full flex flex-col">
@@ -42,7 +38,11 @@
 			{/each}
 		</div>
 		<div>
-			<Button class="bg-purple-700 text-slate-100">Log In</Button>
+			{#if loggedIn}
+				<div class="rounded-full bg-slate-700 h-10 w-auto aspect-square mr-1"></div>
+			{:else}
+				<Button class="bg-purple-700 text-slate-100">Log In</Button>
+			{/if}
 		</div>
 	</nav>
 	<div class="h-full w-full p-8 flex flex-col items-center">
