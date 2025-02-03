@@ -2,10 +2,11 @@ import os
 
 from sqlalchemy import (
     create_engine,
-    MetaData
+    MetaData,
+    event,
 )
 from sqlalchemy.orm import sessionmaker
-from db.model import Base
+from db.model import Base, Role
 
 
 DATABASE_URL: str | None
@@ -21,3 +22,21 @@ metadata: MetaData = Base.metadata
 
 Session = sessionmaker(bind=engine)
 session = Session()
+
+def create_default_roles(target, conn, **kwargs):
+    from db.model import Role
+    from sqlalchemy.orm import Session
+
+    with Session(conn) as sess:
+        director = Role(name="director", can_approve=True)
+        sess.add(director)
+        av = Role(name="av", can_approve=True, parent=director)
+        sess.add(av)
+        teacher = Role(name="teacher", can_approve=False, parent=av)
+        sess.add(teacher)
+
+        sess.commit()
+
+    print("Default roles created")
+
+event.listen(Role.__table__, "after_create", create_default_roles)
