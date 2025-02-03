@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: veranstaltungify-backend
+    build: ./src/backend
+    command: |
+      bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; uvicorn api.main:app --reload --workers 1 --host 0.0.0.0 --port 8002 --ssl-keyfile certs/localhost-key.pem --ssl-certfile certs/localhost.pem'
+    volumes:
+      - ./src/backend:/usr/src/backend/
+    ports:
+      - 8002:8002
+    environment:
+      - DATABASE_URL=postgresql://notes_manager:notes_manager@db/notes_manager_dev
+      - TEST_DATABASE_URL=postgresql://notes_manager:notes_manager@dbtest/notes_manager_test
+      - MSAL_CLIENT_ID=${MSAL_CLIENT_ID}
+      - MSAL_AUTHORITY=${MSAL_AUTHORITY}
+      - MSAL_CLIENT_SECRET=${MSAL_CLIENT_SECRET}
+
+  db:
+    container_name: db
+    image: postgres:15.1-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=notes_manager
+      - POSTGRES_PASSWORD=notes_manager
+      - POSTGRES_DB=notes_manager_dev 
+
+  dbtest:
+    container_name: dbtest
+    image: postgres:15.1-alpine
+    expose:
+      - 6543
+    ports:
+      - 6543:5432
+    environment:
+      - POSTGRES_USER=notes_manager
+      - POSTGRES_PASSWORD=notes_manager
+      - POSTGRES_DB=notes_manager_test 
+
+volumes:
+  postgres_data:
