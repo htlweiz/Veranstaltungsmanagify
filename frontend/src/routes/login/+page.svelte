@@ -91,7 +91,7 @@
 				class="focusring mt-2 w-full bg-purple-700 hover:bg-purple-800"
 				>Log In
 				{#if loading}
-					<RefreshCw class="ml-2 animate-spin stroke-slate-100" />
+					<RefreshCw class="animate-spin stroke-slate-100" />
 				{/if}
 			</Form.Button>
 		</form>
