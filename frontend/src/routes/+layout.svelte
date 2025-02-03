@@ -15,7 +15,7 @@
 </script>
 
 <div class="h-full w-full flex flex-col">
-	<nav class="h-16 border-b-2 border-slate-600 p-2 flex items-center justify-between">
+	<nav class="h-16 border-b-2 border-slate-700 p-2 flex items-center justify-between">
 		<div class="flex items-center space-x-2">
 			<Button
 				href="/"
