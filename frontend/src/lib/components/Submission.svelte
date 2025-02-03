@@ -1,12 +1,14 @@
 <script lang="ts">
 	import type { Event } from '$lib/types';
 	import { Clock, MapPin, Coins, Users } from 'lucide-svelte';
-    import Button from './ui/button/button.svelte';
+	import Button from './ui/button/button.svelte';
+	import { onMount } from 'svelte';
+	import { Spinner } from 'flowbite-svelte';
 
 	export let submission: Event;
 </script>
 
-<div class="flex flex-col w-96 bg-slate-700 border-slate-600 border-2 p-4 gap-y-2 rounded-lg">
+<div class="flex flex-col w-96 bg-slate-700 border-slate-600 border-2 p-4 space-y-2 rounded-lg">
 	<h1 class="flex h1 text-3xl font-bold truncate">{submission.title}</h1>
 	<div class="flex gap-x-2">
 		<Clock class="size-6 text-slate-400" />
@@ -28,6 +30,8 @@
 	</div>
 	<div class="flex justify-between pt-2">
 		<Button class="bg-purple-700 text-white text-lg p-6 hover:bg-purple-800">Edit</Button>
-		<Button class="bg-slate-600 text-white text-lg p-6 hover:bg-slate-600/50">Awaiting Approvement</Button>
+		<Button class="bg-slate-600 text-white text-lg p-6 hover:cursor-default hover:bg-slate-600"
+			>Awaiting Approvement</Button
+		>
 	</div>
 </div>
