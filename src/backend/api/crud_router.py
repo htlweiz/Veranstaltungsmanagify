@@ -1,11 +1,21 @@
-from typing import TypeVar, Generic, Type, Annotated
+from typing import List, TypeVar, Generic, Type, Annotated
 from crud import CRUD
 from fastapi import APIRouter, Header, HTTPException, Request, status, Depends
-from fastapi_pagination import Page, Params
-from fastapi_pagination.ext.sqlalchemy import paginate
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from pydantic import BaseModel
 from api.helpers import requires_user
+from api.model import FilterModel
+from sqlalchemy.orm import Query
+from db.session import session
+
+
+def paginate(query: Select, page: FilterModel):
+    if page.limit < 0:
+        raise ValueError("Limit value cannot be negative")
+    if page.skip < 0:
+        raise ValueError("Skip value cannot be negative")
+
+    return query.limit(page.limit).offset(page.skip)
 
 
 async def get_access_token(request: Request) -> str:
@@ -33,7 +43,7 @@ class CRUDRouter(APIRouter, Generic[V]):
         request_model: Type,
         response_model: Type[V],
         patch_model: Type,
-        filter_model: Type = BaseModel,
+        filter_model: Type = FilterModel,
         put_model: Type = BaseModel,
     ):
         if put_model is None:
@@ -41,8 +51,9 @@ class CRUDRouter(APIRouter, Generic[V]):
         super().__init__()
         self.model_name: str = db_model_name
         self.crud_model: CRUD = crud_model
+        self.response_model: Type[V] = response_model
 
-        async def read(filter: filter_model = Depends()):
+        async def read(filter: filter_model = Depends()) -> List[V]:
             return await self.read(filter)
 
         async def create(
@@ -78,7 +89,7 @@ class CRUDRouter(APIRouter, Generic[V]):
             read,
             methods=["GET"],
             status_code=200,
-            response_model=Page[response_model],
+            response_model=List[response_model],
             tags=[db_model_name],
         )
         self.add_api_route(
@@ -123,10 +134,12 @@ class CRUDRouter(APIRouter, Generic[V]):
             )
         return self.crud_model.create(instance, usr.user_id)
 
-    async def read(self, filter: BaseModel) -> Page[V]:
+    async def read(self, filter: BaseModel) -> List[V]:
         query = self.crud_model.read(filter)
-        res = paginate(query=query, conn=self.crud_model.session)
-        return res
+        query = paginate(query, filter)
+        result = session.execute(query).scalars().all()
+        result = [self.response_model.model_validate(item) for item in result]
+        return result
 
     async def delete(
         self, id: int, AccessToken: Annotated[str | None, Header()] = None

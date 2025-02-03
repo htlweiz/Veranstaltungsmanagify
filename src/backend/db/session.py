@@ -23,20 +23,24 @@ metadata: MetaData = Base.metadata
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
 def create_default_roles(target, conn, **kwargs):
     from db.model import Role
     from sqlalchemy.orm import Session
 
     with Session(conn) as sess:
-        director = Role(name="director", can_approve=True)
+        director = Role(name="director", can_approve=True, parent_id=None)
         sess.add(director)
-        av = Role(name="av", can_approve=True, parent=director)
+        session.flush()
+        av = Role(name="av", can_approve=True, parent_id=director.role_id)
         sess.add(av)
-        teacher = Role(name="teacher", can_approve=False, parent=av)
+        session.flush()
+        teacher = Role(name="teacher", can_approve=False, parent_id=av.role_id)
         sess.add(teacher)
 
         sess.commit()
 
     print("Default roles created")
+
 
 event.listen(Role.__table__, "after_create", create_default_roles)
