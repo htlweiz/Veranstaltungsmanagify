@@ -18,8 +18,7 @@ router = APIRouter()
 
 CLIENT_ID = os.environ.get("MSAL_CLIENT_ID")
 CLIENT_SECRET = os.environ.get("MSAL_CLIENT_SECRET")
-TENANT_ID = os.environ.get("MSAL_TENANT_ID")
-AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+AUTHORITY = os.environ.get("MSAL_AUTHORITY")
 
 
 msal_client = msal.ConfidentialClientApplication(
