@@ -16,12 +16,15 @@ temp_users = ExpiringDict(max_len=9999, max_age_seconds=15 * 60)
 
 router = APIRouter()
 
-client_id = os.environ.get("MSAL_CLIENT_ID")
-authority = os.environ.get("MSAL_AUTHORITY")
-secret = os.environ.get("MSAL_CLIENT_SECRET")
+CLIENT_ID = os.environ.get("MSAL_CLIENT_ID")
+CLIENT_SECRET = os.environ.get("MSAL_CLIENT_SECRET")
+AUTHORITY = os.environ.get("MSAL_AUTHORITY")
+
 
 msal_client = msal.ConfidentialClientApplication(
-    client_id, authority=authority, client_credential=secret
+    client_id=CLIENT_ID,
+    client_credential=CLIENT_SECRET,
+    authority=AUTHORITY
 )
 
 
