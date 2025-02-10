@@ -2,8 +2,6 @@
 	import type { Event } from '$lib/types';
 	import { Clock, MapPin, Coins, Users } from 'lucide-svelte';
 	import Button from './ui/button/button.svelte';
-	import { onMount } from 'svelte';
-	import { Spinner } from 'flowbite-svelte';
 
 	export let submission: Event;
 </script>

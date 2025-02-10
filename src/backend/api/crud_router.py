@@ -44,7 +44,7 @@ class CRUDRouter(APIRouter, Generic[V]):
         response_model: Type[V],
         patch_model: Type,
         filter_model: Type = FilterModel,
-        put_model: Type = BaseModel,
+        put_model: Type = None,
     ):
         if put_model is None:
             put_model = request_model
@@ -74,7 +74,7 @@ class CRUDRouter(APIRouter, Generic[V]):
             instance: patch_model,
             cookie: Annotated[str | None, Depends(get_access_token)] = None,
         ):
-            return await self.patch(id, instance, AccessToken)
+            return await self.patch(id, instance, cookie)
 
         self.add_api_route(
             "/" + db_model_name,
@@ -142,7 +142,7 @@ class CRUDRouter(APIRouter, Generic[V]):
         return result
 
     async def delete(
-        self, id: int, AccessToken: Annotated[str | None, Header()] = None
+        self, id: int, AccessToken: Annotated[str | None, Depends(get_access_token)] = None,
     ):
         usr = requires_user(AccessToken)
         if usr is None:

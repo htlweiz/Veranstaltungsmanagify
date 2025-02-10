@@ -21,8 +21,12 @@
 
 	let roles: Promise<any>;
 	onMount(async () => {
-		const res = await fetch('https://localhost:8002/api/roles');
+		const res = await fetch('https://0.0.0.0:8002/roles');
+		
 		roles = res.json();
+		roles.then((data) => {
+			console.log(data);
+		});
 		submissions = [
 			{
 				title: 'Event 1',
@@ -55,11 +59,14 @@
 	});
 </script>
 
+
 {#await roles}
-	<div class="flex justify-center items-center h-full w-full">
+	<p>test</p>
+	<div class="flex justify-center items-center h-full w-full bg-slate-100">
 		<Spinner class="size-24" />
 	</div>
 {:then data}
+	<p>{data}</p>
 	<div class="grid grid-cols-3 gap-5 p-5">
 		{#each submissions.slice((currentPage - 1) * perPage, (currentPage - 1) * perPage + perPage) as submission}
 			<Submission {submission} />

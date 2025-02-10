@@ -25,9 +25,15 @@ class UserCRUD(CRUD[User]):
             password=hsh.decode("utf-8"),
             access_token=access_token,
             username=payload.username,
+            role_id=payload.role_id,
         )
-        self.session.add(user)
-        self.session.commit()
+        try:
+            self.session.add(user)
+            self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
         self.session.refresh(user)
         return user
 
