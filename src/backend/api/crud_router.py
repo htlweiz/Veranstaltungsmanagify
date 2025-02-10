@@ -74,7 +74,7 @@ class CRUDRouter(APIRouter, Generic[V]):
             instance: patch_model,
             cookie: Annotated[str | None, Depends(get_access_token)] = None,
         ):
-            return await self.patch(id, instance, AccessToken)
+            return await self.patch(id, instance, cookie)
 
         self.add_api_route(
             "/" + db_model_name,

@@ -2,12 +2,14 @@ from typing import List
 
 from pydantic import BaseModel
 from crud.crud import CRUD, log_db, select
+from sqlalchemy.sql import func
+from sqlalchemy.orm import aliased
 import random
 from datetime import timedelta
 from sqlalchemy.sql import Select
 from db.session import session, Session
 from db.model import Event, Class, Student
-from api.model import EventSchema, EventPatch, EventDB
+from api.model import EventSchema, EventPatch, EventDB 
 from sqlalchemy import and_ 
 from crud.addresses import addresses
 from crud.users import users
@@ -39,7 +41,8 @@ class EventCRUD(CRUD[Event]):
                 if len(available_approvers) == 0:
                     return
 
-                parent: User = random.shuffle(available_approvers)[0]
+                random.shuffle(available_approvers)
+                parent: User = available_approvers[0]
 
                 pending_approval = UserApproveEvent(event_id=event.event_id, user_id=user.user_id, is_approved=False)
                 session.add(pending_approval)
@@ -50,11 +53,10 @@ class EventCRUD(CRUD[Event]):
 
         if payload.end - payload.start > timedelta(days=1):
             multi_day_events.create(event.event_id, user_creating_id)
-        
-        pending_approval = session.query(UserApproveEvent).where(and_(UserApproveEvent.event_id == event.event_id, UserApproveEvent.is_approved == False)).all()
 
+        pending_approval = session.query(UserApproveEvent).where(and_(UserApproveEvent.event_id == event.event_id, UserApproveEvent.is_approved == False)).all()
         event.pending_approval = pending_approval
 
-        return event 
+        return event
 
 events = EventCRUD(session)

@@ -63,7 +63,7 @@ class User(Base):
         Integer,
         ForeignKey("roles.role_id", ondelete="CASCADE"),
         nullable=False,
-        default=2,
+        default=0,
     )
 
     approvals = relationship(

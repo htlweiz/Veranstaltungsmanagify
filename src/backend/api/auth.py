@@ -65,7 +65,11 @@ async def msal_login(token: str) -> User | None:
 
 @router.post("/signup", status_code=201, response_class=HTMLResponse, tags=["auth"])
 async def signup(user: SignupSchema):
-    created = users.create(user)
+    try:
+        created = users.create(user)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=400)
+
     response = Response(status_code=status.HTTP_201_CREATED)
     response.set_cookie(
         "access_token",
