@@ -37,6 +37,7 @@ class SignupSchema(_Base):
     email: str
     password: str
     username: str
+    role_id: int = 0
 
     def __str__(self) -> str:
         return f"Email: {self.email}, Password: {self.password}"
@@ -61,12 +62,11 @@ class LoginDB(_Base):
 class MSALLogin(_Base):
     token: str
 
-
 class UserSchema(_Base):
     email: str
     password: str
     username: str
-    role: int
+    role_id: int
 
 
 @partial_model
@@ -126,7 +126,6 @@ class MultiDayDataDB(_Base):
 
 
 class PendingApprovalDB(_Base):
-    event_id: int
     user_id: int
     is_approved: bool
 
@@ -142,7 +141,7 @@ class EventDB(_Base):
     students: List[StudentDB]
     address: Address
     multi_day_data: Optional[MultiDayDataDB] = None
-    pending_approval: List[PendingApprovalDB]
+    pending_approval: List[PendingApprovalDB] 
 
 
 @partial_model
