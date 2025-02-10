@@ -1,31 +1,26 @@
 <script lang="ts">
 	import * as FormPrimitive from "formsnap";
-	import type { WithoutChild } from "bits-ui";
 	import { cn } from "$lib/utils.js";
 
-	let {
-		ref = $bindable(null),
-		class: className,
-		errorClasses,
-		children: childrenProp,
-		...restProps
-	}: WithoutChild<FormPrimitive.FieldErrorsProps> & {
+	type $$Props = FormPrimitive.FieldErrorsProps & {
 		errorClasses?: string | undefined | null;
-	} = $props();
+	};
+
+	let className: $$Props["class"] = undefined;
+	export { className as class };
+	export let errorClasses: $$Props["class"] = undefined;
 </script>
 
 <FormPrimitive.FieldErrors
-	bind:ref
 	class={cn("text-destructive text-sm font-medium", className)}
-	{...restProps}
+	{...$$restProps}
+	let:errors
+	let:fieldErrorsAttrs
+	let:errorAttrs
 >
-	{#snippet children({ errors, errorProps })}
-		{#if childrenProp}
-			{@render childrenProp({ errors, errorProps })}
-		{:else}
-			{#each errors as error}
-				<div {...errorProps} class={cn(errorClasses)}>{error}</div>
-			{/each}
-		{/if}
-	{/snippet}
+	<slot {errors} {fieldErrorsAttrs} {errorAttrs}>
+		{#each errors as error}
+			<div {...errorAttrs} class={cn(errorClasses)}>{error}</div>
+		{/each}
+	</slot>
 </FormPrimitive.FieldErrors>
