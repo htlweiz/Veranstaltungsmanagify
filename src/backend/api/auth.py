@@ -19,6 +19,9 @@ router = APIRouter()
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 AUTHORITY = os.getenv("AUTHORITY")
+SCOPES = ["User.Read"]
+# Probably wrong
+REDIRECT_URI = "https://localhost:8002/get_token"
 
 msal_client = msal.ConfidentialClientApplication(
     client_id=CLIENT_ID,
@@ -61,6 +64,28 @@ async def msal_login(token: str) -> User | None:
             return create_user_from_token(access_token)
     else:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+
+############################### Unfinished alternative login for easier testing
+# Not in working state, error on get_token ("Authentication code not found")
+@router.get("/auth_flow", tags=["auth"])
+async def get_auth_flow():
+    auth_flow = msal_client.initiate_auth_code_flow(SCOPES, redirect_uri=REDIRECT_URI)
+    return {auth_flow["auth_uri"]}
+
+@   router.get("/get_token", tags=["auth"])
+async def get_token(request: Request, auth_uri):
+    query_params = dict(request.query_params)
+    
+    if "code" not in query_params:
+        return {"error": "Authorization code not found"}
+
+    token_response = msal_client.acquire_token_by_auth_code_flow(auth_uri, query_params)
+
+    if "error" in token_response:
+        return {"error": token_response.get("error_description", "Unknown error")}
+
+    return {"access_token": token_response.get("access_token")}
 
 
 @router.post("/signup", status_code=201, response_class=HTMLResponse, tags=["auth"])

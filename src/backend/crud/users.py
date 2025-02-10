@@ -11,7 +11,7 @@ class UserCRUD(CRUD[User]):
         super().__init__(session, User)
 
     # We don't want to log the password
-    def create(self, payload: SignupSchema, user_creating_id) -> User:
+    def create(self, payload: SignupSchema, user_creating_id=None) -> User:
         # Hash Password
         byte_password = payload.password.encode("utf-8")
         salt = bcrypt.gensalt(8)
