@@ -21,7 +21,7 @@ CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 AUTHORITY = os.getenv("AUTHORITY")
 SCOPES = ["User.Read"]
 # Probably wrong
-REDIRECT_URI = "https://localhost:8002/get_token"
+REDIRECT_URI = "https://localhost:8002/oauth2-redirect"
 
 msal_client = msal.ConfidentialClientApplication(
     client_id=CLIENT_ID,
@@ -30,19 +30,24 @@ msal_client = msal.ConfidentialClientApplication(
 )
 
 
-def get_email_from_token(token: str) -> str:
+def get_info_from_token(token: str) -> tuple[str, str]:
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         email = decoded_token.get("unique_name") or decoded_token.get("upn")
+        username = decoded_token.get("preferred_username") or decoded_token.get("name")
         if not email:
             raise HTTPException(status_code=400, detail="Email not found in token")
-        return email
+        if not username:
+            raise HTTPException(status_code=400, detail="Username not found in token")
+
+        return email, username
     except jwt.DecodeError:
         raise HTTPException(status_code=400, detail="Invalid token")
 
 
 def create_user_from_token(access_token: str) -> User:
-    user = SignupSchema(email=get_email_from_token(access_token), password="")
+    email, username = get_info_from_token(access_token)
+    user = SignupSchema(email=email, password="", role_id=1, username=username)
     return users.create(user)
 
 
@@ -56,7 +61,7 @@ async def msal_login(token: str) -> User | None:
 
     if "access_token" in result:
         access_token = result["access_token"]
-        email = get_email_from_token(access_token)
+        email, _ = get_info_from_token(access_token)
         user = users.get_by_email(email)
         if user:
             return user
