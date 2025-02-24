@@ -11,6 +11,9 @@ ENV PYTHONUNBUFFERED 1
 # copy requirements file
 COPY ./requirements.txt /usr/src/backend/requirements.txt
 
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/v3.21/main" >> /etc/apk/repositories && \
+    echo "http://dl-cdn.alpinelinux.org/alpine/v3.21/community" >> /etc/apk/repositories
+
 # install dependencies
 RUN set -eux \
     && apk add --no-cache --virtual .build-deps build-base \

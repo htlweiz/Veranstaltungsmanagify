@@ -1,6 +1,7 @@
 from typing import List
-
+from copy import copy
 from pydantic import BaseModel
+from fastapi import HTTPException
 from crud.crud import CRUD, log_db, select
 from sqlalchemy.sql import func
 from sqlalchemy.orm import aliased
@@ -58,5 +59,42 @@ class EventCRUD(CRUD[Event]):
         event.pending_approval = pending_approval
 
         return event
+    
+    def patch(self, id, request: EventPatch) -> EventDB:
+        unset_copy = copy(request)
+        unset_copy.teachers = None
+        unset_copy.students = None
+        unset_copy.address = None
+
+        event = super().patch(id, unset_copy) 
+        if event is None:
+            return None
+
+        if request.address is not None:
+            event.address = addresses.create(request.address, None)
+        
+        if request.teachers is not None:
+            event.users = [users.get_by_email(teacher) for teacher in request.teachers]
+        
+        if request.students is not None:
+            event.students = [students.get_by_id(student_id) for student_id in request.students]
+
+            if None in event.students:
+                self.session.rollback()
+                raise HTTPException(status_code=400, detail="Student not found")
+
+        self.session.commit()
+
+        # Update for multi-day event check
+        # if request.end - request.start > timedelta(days=1):
+        #    multi_day_events.create(event.event_id, None)
+        pending_approval = session.query(UserApproveEvent).where(and_(UserApproveEvent.event_id == event.event_id, UserApproveEvent.is_approved == False)).all()
+        event.pending_approval = pending_approval
+
+        session.refresh(event)
+        return event
+
+    def put(self, id, request):
+        return self.patch(id, request)
 
 events = EventCRUD(session)

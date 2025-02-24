@@ -1,6 +1,9 @@
-from api.model import SignupSchema
+import sqlalchemy.exc
+from api.model import SignupSchema, UserPatch, UserSchema
 from crud.crud import CRUD, log_db
 from db.session import session, Session
+import sqlalchemy
+from fastapi import HTTPException
 from db.model import User
 import bcrypt
 import uuid
@@ -36,6 +39,45 @@ class UserCRUD(CRUD[User]):
 
         self.session.refresh(user)
         return user
+    
+    def patch(self, id, request: UserPatch) -> User:
+        user = self.session.query(User).filter_by(user_id=id).first()
+
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if request.password is not None:
+            byte_password = request.password.encode("utf-8")
+            salt = bcrypt.gensalt(8)
+            hsh = bcrypt.hashpw(byte_password, salt)
+
+            user.password = hsh.decode("utf-8")
+        
+        if request.email is not None:
+            user.email = request.email
+        
+        if request.username is not None:
+            user.username = request.username
+        
+        if request.role_id is not None: 
+            user.role_id = request.role_id
+
+        try:
+            self.session.commit()
+        except sqlalchemy.exc.IntegrityError as e:
+            if "users_username_key" in str(e):
+                raise HTTPException(status_code=400, detail="Username already in use")
+            if "users_email_key" in str(e):
+                raise HTTPException(status_code=400, detail="E-Mail already in use")
+        except Exception as e:
+            self.session.rollback()
+            raise e
+
+        self.session.refresh(user)
+        return user
+    
+    def put(self, id, request):
+        return self.patch(id, request)
 
     @log_db(class_name="User")
     def get_by_email(self, email: str) -> User:
