@@ -58,5 +58,29 @@ class EventCRUD(CRUD[Event]):
         event.pending_approval = pending_approval
 
         return event
+    
+    def patch(self, id, request: EventPatch) -> EventDB:
+        event = super().patch(id, request.model_dump(exclude={"teachers", "students", "address"})) 
+        if event is None:
+            return None
+
+        if request.address is not None:
+            event.address = addresses.create(request.address, None)
+        
+        if request.teachers is not None:
+            event.users = [users.get_by_email(teacher) for teacher in request.teachers]
+        
+        if request.students is not None:
+            event.students = [students.get_by_id(student_id) for student_id in request.students]
+
+        self.session.commit()
+
+        # Update for multi-day event check
+        # if request.end - request.start > timedelta(days=1):
+        #    multi_day_events.create(event.event_id, None)
+        return event
+
+    def put(self, id, request):
+        return self.patch(id, request)
 
 events = EventCRUD(session)
