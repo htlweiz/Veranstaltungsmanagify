@@ -78,21 +78,6 @@ async def get_auth_flow():
     auth_flow = msal_client.initiate_auth_code_flow(SCOPES, redirect_uri=REDIRECT_URI)
     return {auth_flow["auth_uri"]}
 
-@   router.get("/get_token", tags=["auth"])
-async def get_token(request: Request, auth_uri):
-    query_params = dict(request.query_params)
-    
-    if "code" not in query_params:
-        return {"error": "Authorization code not found"}
-
-    token_response = msal_client.acquire_token_by_auth_code_flow(auth_uri, query_params)
-
-    if "error" in token_response:
-        return {"error": token_response.get("error_description", "Unknown error")}
-
-    return {"access_token": token_response.get("access_token")}
-
-
 @router.post("/signup", status_code=201, response_class=HTMLResponse, tags=["auth"])
 async def signup(user: SignupSchema):
     try:

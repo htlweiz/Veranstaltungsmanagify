@@ -5,7 +5,7 @@ import pytest_asyncio
 from starlette.testclient import TestClient
 from db.session import session, metadata 
 from api.main import app
-from db.model import Note, User
+from db.model import User
 import socketio
 
 SERVER_URL = "https://127.0.0.1:8002"
@@ -42,40 +42,6 @@ def user():
 
     session.delete(user)
 
-
-@pytest.fixture(scope="module")
-def note(user: User):
-    data = Note(
-        title="Note title",
-        content="Note content",
-        public=True,
-        user_id=user.user_id,
-    )
-
-    session.add(data)
-    session.commit()
-
-    yield data
-
-    session.delete(data)
-
-@pytest.fixture(scope="module")
-def note_priv(user: User):
-    note = Note(
-        title="Note title",
-        content="Note content",
-        user_id=user.user_id,
-        public=False,
-        created=datetime.datetime.now(),
-        changed=datetime.datetime.now()
-    )
-
-    session.add(note)
-    session.commit()
-
-    yield note
-
-    session.delete(note)
 
 
 @pytest_asyncio.fixture
